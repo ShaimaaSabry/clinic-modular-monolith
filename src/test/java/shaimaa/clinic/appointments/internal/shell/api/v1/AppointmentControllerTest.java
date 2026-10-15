@@ -73,12 +73,12 @@ class AppointmentControllerTest {
         }
 
         private Appointment createValidAppointment() {
-            return new Appointment(
+            return Appointment.of(
                     UUID.randomUUID(),
                     UUID.randomUUID(),
                     LocalDateTime.now(),
                     250,
-                    new Patient(UUID.randomUUID(), "Yara", "Ali"),
+                    Patient.of(UUID.randomUUID(), "Yara", "Ali"),
                     AppointmentStatus.SCHEDULED
             );
         }

@@ -68,7 +68,7 @@ class GetAvailableSlotsControllerTest {
         }
 
         private Slot createValidSlot() {
-            return new Slot(
+            return Slot.from(
                     UUID.randomUUID(),
                     LocalDateTime.now(),
                     250f

@@ -2,13 +2,15 @@ package shaimaa.clinic.appointments.internal.core.model;
 
 import lombok.Getter;
 import lombok.ToString;
+import shaimaa.clinic.appointments.internal.core.events.AppointmentCreated;
+import shaimaa.clinic.shared.domain.AggregateRoot;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @ToString
-public class Appointment {
+public class Appointment extends AggregateRoot {
     private final UUID id;
 
     private final UUID slotId;
@@ -45,7 +47,7 @@ public class Appointment {
             String patientFirstName,
             String patientLastName
     ) {
-        return new Appointment(
+        Appointment appointment = new Appointment(
                 UUID.randomUUID(),
                 slotId,
                 slotStartsAt,
@@ -57,6 +59,18 @@ public class Appointment {
                 ),
                 AppointmentStatus.SCHEDULED
         );
+
+        appointment.raiseEvent(new AppointmentCreated(
+                appointment.id,
+                slotId,
+                slotStartsAt,
+                slotCost,
+                patientId,
+                patientFirstName,
+                patientLastName
+        ));
+
+        return appointment;
     }
 
     public static Appointment of(

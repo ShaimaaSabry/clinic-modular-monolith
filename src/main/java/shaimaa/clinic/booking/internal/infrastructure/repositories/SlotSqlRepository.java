@@ -2,10 +2,14 @@ package shaimaa.clinic.booking.internal.infrastructure.repositories;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import shaimaa.clinic.booking.internal.domain.contracts.SlotRepository;
 import shaimaa.clinic.booking.internal.domain.model.Slot;
+import shaimaa.clinic.shared.domain.EventBusImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +19,17 @@ import java.util.UUID;
 class SlotSqlRepository implements SlotRepository {
     @PersistenceContext(unitName = "booking")
     private EntityManager entityManager;
+
+    private final TransactionTemplate transactionTemplate;
+    private final EventBusImpl eventBus;
+
+    SlotSqlRepository(
+            @Qualifier("bookingTransactionManager") PlatformTransactionManager transactionManager,
+            EventBusImpl eventBus
+    ) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.eventBus = eventBus;
+    }
 
     @Override
     @Transactional(transactionManager = "bookingTransactionManager")
@@ -52,10 +67,17 @@ class SlotSqlRepository implements SlotRepository {
     }
 
     @Override
-    @Transactional("bookingTransactionManager")
-    public void deleteSlot(UUID slotId) {
-        SlotEntity slotEntity = this.entityManager.find(SlotEntity.class, slotId);
+    public void delete(Slot slot) {
+        this.transactionTemplate.executeWithoutResult(status -> {
+            SlotEntity slotEntity = this.entityManager.find(SlotEntity.class, slot.getId());
 
-        this.entityManager.remove(slotEntity);
+            this.entityManager.remove(slotEntity);
+        });
+
+        // Pushed only after the transaction has committed, so other modules never react to a change that was rolled back.
+        slot.pullEvents()
+                .stream()
+                .map(BookingEventsMapper::map)
+                .forEach(this.eventBus::push);
     }
 }

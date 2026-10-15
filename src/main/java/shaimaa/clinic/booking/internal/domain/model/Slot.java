@@ -1,13 +1,14 @@
 package shaimaa.clinic.booking.internal.domain.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import shaimaa.clinic.booking.internal.domain.events.SlotBooked;
+import shaimaa.clinic.shared.domain.AggregateRoot;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-public class Slot {
+public class Slot extends AggregateRoot {
     private UUID id;
 
     private LocalDateTime startsAt;
@@ -34,6 +35,15 @@ public class Slot {
                 startsAt,
                 cost
         );
+    }
+
+    public void book(UUID patientId) {
+        raiseEvent(new SlotBooked(
+                this.id,
+                this.startsAt,
+                this.cost,
+                patientId
+        ));
     }
 
     public static Slot from(

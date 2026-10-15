@@ -2,7 +2,6 @@ package shaimaa.clinic.appointments.internal.core.services;
 
 import org.springframework.stereotype.Service;
 import shaimaa.clinic.appointments.internal.core.contracts.AppointmentRepository;
-import shaimaa.clinic.appointments.internal.core.contracts.AppointmentsPublisher;
 import shaimaa.clinic.appointments.internal.core.contracts.PatientRepository;
 import shaimaa.clinic.appointments.internal.core.exceptions.AppointmentNotFoundException;
 import shaimaa.clinic.appointments.internal.core.model.Appointment;
@@ -16,16 +15,13 @@ import java.util.UUID;
 public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
-    private final AppointmentsPublisher appointmentsPublisher;
 
     AppointmentService(
             final AppointmentRepository appointmentRepository,
-            final PatientRepository patientRepository,
-            final AppointmentsPublisher appointmentsPublisher
+            final PatientRepository patientRepository
     ) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
-        this.appointmentsPublisher = appointmentsPublisher;
     }
 
     public List<Appointment> getUpcomingAppointments() {
@@ -51,8 +47,6 @@ public class AppointmentService {
         );
 
         this.appointmentRepository.save(appointment);
-
-        this.appointmentsPublisher.publish(appointment);
     }
 
     public void cancelAppointment(UUID appointmentId) throws AppointmentNotFoundException {

@@ -10,5 +10,5 @@ public interface SlotRepository {
     void save(Slot slot);
     List<Slot> getAvailableSlots();
     Optional<Slot> getSlotById(UUID slotId);
-    void deleteSlot(UUID slotId);
+    void delete(Slot slot);
 }

@@ -4,10 +4,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import shaimaa.clinic.appointments.internal.core.contracts.AppointmentRepository;
 import shaimaa.clinic.appointments.internal.core.model.Appointment;
+import shaimaa.clinic.shared.domain.EventBusImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +22,17 @@ public class AppointmentSqlRepository implements AppointmentRepository {
 
     @PersistenceContext(unitName = "appointments")
     private EntityManager entityManager;
+
+    private final TransactionTemplate transactionTemplate;
+    private final EventBusImpl eventBus;
+
+    AppointmentSqlRepository(
+            @Qualifier("appointmentsTransactionManager") PlatformTransactionManager transactionManager,
+            EventBusImpl eventBus
+    ) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.eventBus = eventBus;
+    }
 
     @Override
     public List<Appointment> getUpcomingAppointments() {
@@ -45,7 +59,6 @@ public class AppointmentSqlRepository implements AppointmentRepository {
     }
 
     @Override
-    @Transactional("appointmentsTransactionManager")
     public void save(Appointment appointment) {
         LOG.debug(
                 "Saving appointment: {}",
@@ -57,6 +70,14 @@ public class AppointmentSqlRepository implements AppointmentRepository {
                 appointmentEntity
         );
 
-        this.entityManager.merge(appointmentEntity);
+        this.transactionTemplate.executeWithoutResult(status ->
+                this.entityManager.merge(appointmentEntity)
+        );
+
+        // Pushed only after the transaction has committed, so other modules never react to a change that was rolled back.
+        appointment.pullEvents()
+                .stream()
+                .map(AppointmentEventsMapper::map)
+                .forEach(this.eventBus::push);
     }
 }
