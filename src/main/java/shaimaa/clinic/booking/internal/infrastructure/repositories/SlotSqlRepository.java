@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import shaimaa.clinic.booking.internal.domain.contracts.BookingPublisher;
 import shaimaa.clinic.booking.internal.domain.contracts.SlotRepository;
 import shaimaa.clinic.booking.internal.domain.model.Slot;
-import shaimaa.clinic.shared.domain.EventBusImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,14 +21,14 @@ class SlotSqlRepository implements SlotRepository {
     private EntityManager entityManager;
 
     private final TransactionTemplate transactionTemplate;
-    private final EventBusImpl eventBus;
+    private final BookingPublisher bookingPublisher;
 
     SlotSqlRepository(
             @Qualifier("bookingTransactionManager") PlatformTransactionManager transactionManager,
-            EventBusImpl eventBus
+            BookingPublisher bookingPublisher
     ) {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.eventBus = eventBus;
+        this.bookingPublisher = bookingPublisher;
     }
 
     @Override
@@ -75,9 +75,6 @@ class SlotSqlRepository implements SlotRepository {
         });
 
         // Pushed only after the transaction has committed, so other modules never react to a change that was rolled back.
-        slot.pullEvents()
-                .stream()
-                .map(BookingEventsMapper::map)
-                .forEach(this.eventBus::push);
+        this.bookingPublisher.publish(slot.pullEvents());
     }
 }

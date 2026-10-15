@@ -1,4 +1,4 @@
-package shaimaa.clinic.booking.internal.infrastructure.repositories;
+package shaimaa.clinic.booking.internal.infrastructure.publishers;
 
 import shaimaa.clinic.booking.internal.domain.events.SlotBooked;
 import shaimaa.clinic.booking.shared.dtos.SlotBookedDto;

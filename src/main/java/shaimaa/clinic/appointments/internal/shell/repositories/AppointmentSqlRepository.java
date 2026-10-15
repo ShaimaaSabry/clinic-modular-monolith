@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import shaimaa.clinic.appointments.internal.core.contracts.AppointmentRepository;
+import shaimaa.clinic.appointments.internal.core.contracts.AppointmentsPublisher;
 import shaimaa.clinic.appointments.internal.core.model.Appointment;
-import shaimaa.clinic.shared.domain.EventBusImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,14 +24,14 @@ public class AppointmentSqlRepository implements AppointmentRepository {
     private EntityManager entityManager;
 
     private final TransactionTemplate transactionTemplate;
-    private final EventBusImpl eventBus;
+    private final AppointmentsPublisher appointmentsPublisher;
 
     AppointmentSqlRepository(
             @Qualifier("appointmentsTransactionManager") PlatformTransactionManager transactionManager,
-            EventBusImpl eventBus
+            AppointmentsPublisher appointmentsPublisher
     ) {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.eventBus = eventBus;
+        this.appointmentsPublisher = appointmentsPublisher;
     }
 
     @Override
@@ -75,9 +75,6 @@ public class AppointmentSqlRepository implements AppointmentRepository {
         );
 
         // Pushed only after the transaction has committed, so other modules never react to a change that was rolled back.
-        appointment.pullEvents()
-                .stream()
-                .map(AppointmentEventsMapper::map)
-                .forEach(this.eventBus::push);
+        this.appointmentsPublisher.publish(appointment.pullEvents());
     }
 }

@@ -1,4 +1,4 @@
-package shaimaa.clinic.appointments.internal.shell.repositories;
+package shaimaa.clinic.appointments.internal.shell.publishers;
 
 import shaimaa.clinic.appointments.internal.core.events.AppointmentCreated;
 import shaimaa.clinic.appointments.shared.dtos.AppointmentCreatedDto;
