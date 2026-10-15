@@ -9,7 +9,7 @@ Swagger: http://localhost:8080/swagger-ui/index.html
 
 Prompt: [Modular Monolith Course Assement](https://docs.google.com/document/d/1G3y16cTEYC__xfKTnoHP3YrW0FQSRB2kf8S23i1Gg8M/edit?tab=t.0#heading=h.5uoc4mfz7mn4)
 
-Example project: Charity Hub [https://github.com/TechMentors-LLC/charity_hub]
+Example project: [Charity Hub](https://github.com/TechMentors-LLC/charity_hub)
 
 ## Architecture
 
